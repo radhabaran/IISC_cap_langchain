@@ -1,0 +1,26 @@
+# LangChain Ecosystem
+langchain==0.0.350
+langchain-openai==0.0.2.post1
+langchain-community==0.0.3
+langchain-core==0.0.5
+
+# Vector Databases & Similarity Search
+chromadb==0.5.1
+faiss-cpu==1.7.4    # Use faiss-gpu if you have CUDA support
+
+# OpenAI
+openai==1.3.7
+tiktoken==0.5.1
+
+# UI Framework
+gradio==4.7.1
+
+# Data Processing & Utils
+numpy==1.26.2
+pandas==2.1.3
+python-dotenv==1.0.0
+
+# Core Dependencies
+pydantic==2.5.2
+typing-extensions==4.8.0
+requests==2.31.0

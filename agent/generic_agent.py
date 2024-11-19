@@ -56,9 +56,15 @@ your product's safety and provide you with updates along the way."
 Proactive Update Offer
 
 Customer: "Can I get updates on my product shipment's address."
-Final Amswer: "Absolutely! I can send you notification whenever your product's shipment
+Final Answer: "Absolutely! I can send you notification whenever your product's shipment
 reaches a checkpoint or if there are any major updates. Would you like to set that
 up ?"
+
+Out of conext question 
+
+Customer : "What is the capital city of Nigeria ?"
+Final Answer: "Sorry, I do not know. I know only about Amazon products. In case you haave any furter 
+qiestions on the products and services of Amazon, I can help you."
 """
 
 
@@ -67,13 +73,16 @@ def initialize_generic_agent(llm_instance, memory_instance):
     llm = llm_instance
     memory = memory_instance
     prompt = ChatPromptTemplate.from_messages([
-        ("system","system_prompt"),
-        ("human", "{query}")
+        ("system", system_prompt),
+        ("human", "{input}")
     ])
 
 def process(query):
     chain = prompt | llm
-    response = chain.invoke({"query": query})
+    response = chain.invoke({"input": query})
+    print("*********** In generic query *************")
+    print("query :", query)
+    print("response :", response)
     return response.content
 
 def clear_context():

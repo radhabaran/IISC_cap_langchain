@@ -28,26 +28,50 @@ def initialize_planning_agent(llm_instance, memory_instance):
         Tool(
             name="route_query",
             func=route_query,
-            description="Routes the query to appropriate agent based on query type"
+            description="First step: Determine query type. Returns either 'product_review' or 'generic'"
         ),
         Tool(
             name="get_product_info",
             func=get_product_info,
-            description="Get product related information including features, prices, and reviews"
+            description="Use this for product-related queries about features, prices, availability, or reviews"
         ),
         Tool(
             name="handle_generic_query",
             func=handle_generic_query,
-            description="Handle general queries not related to products"
+            description="Use this for general queries not related to products"
+        ),
+        Tool(
+            name="compose_response",
+            func=compose_response,
+            description="Final step: Use this to format and enhance the response. After this step, return the response to main.py"
         )
     ]
     
+    system_prompt = """You are a planning agent that processes user queries efficiently. Follow these steps:
+
+    1. Always start by using route_query to determine the query type
+    2. Based on the route_query result:
+       - If 'product_review': use get_product_info
+       - If 'generic': use handle_generic_query
+    3. Always use compose_response as the final step
+    4. IMPORTANT: After compose_response returns its result, return that result immediately. 
+       Do not perform any additional processing or tool calls.
+    
+    Important: 
+    - Follow the sequence: route -> process -> compose
+    - Only use one processing tool (get_product_info OR handle_generic_query) after routing
+    - Always end with compose_response
+
+    Remember: The sequence must be route -> process -> compose -> return
+    """
+
     agent = initialize_agent(
         tools,
         llm,
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
-        memory=memory
+        memory=memory,
+        system_message=system_prompt
     )
 
 def route_query(query):
@@ -59,14 +83,14 @@ def get_product_info(query):
 def handle_generic_query(query):
     return generic_agent.process(query)
 
+def compose_response(response):
+    return composer_agent.compose_response(response)
+
 def execute(query):
     try:
-        response = agent.run(
-            f"Process this query: {query}"
+        return agent.run(
+            f"Process this user query: {query}"
         )
-        print("***************in planning_agent**************")
-        print("response :", response)
-        return composer_agent.compose_response(response)
     except Exception as e:
         return f"Error in planning agent: {str(e)}"
 

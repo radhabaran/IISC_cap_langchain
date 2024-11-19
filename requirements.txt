@@ -1,19 +1,20 @@
 # LangChain Ecosystem
-langchain==0.0.350
-langchain-openai==0.0.2.post1
-langchain-community==0.0.3
-langchain-core==0.0.5
+langchain==0.1.3
+langchain_openai==0.0.5
+langchain-community
+langchain-core
 
 # Vector Databases & Similarity Search
-chromadb==0.5.1
-faiss-cpu==1.7.4    # Use faiss-gpu if you have CUDA support
+chromadb==0.5.0
+faiss-cpu
 
 # OpenAI
-openai==1.3.7
-tiktoken==0.5.1
+openai==1.10
+tiktoken>=0.5.2
 
 # UI Framework
 gradio==4.7.1
+setuptools>=65.5.1
 
 # Data Processing & Utils
 numpy==1.26.2

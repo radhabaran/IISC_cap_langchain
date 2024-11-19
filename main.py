@@ -6,6 +6,10 @@ from langchain.memory import ConversationBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 from agent.planning_agent import PlanningAgent
 from dotenv import load_dotenv
+import os
+
+api_key = os.environ['OA_API']           
+os.environ['OPENAI_API_KEY'] = api_key
 
 class Orchestrator:
     def __init__(self):

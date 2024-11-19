@@ -1,15 +1,12 @@
-# app.py
 import gradio as gr
-from typing import List
-from main import Orchestrator
 
-def create_interface(orchestrator: Orchestrator) -> gr.Blocks:
+def create_interface(process_query, clear_context):
     with gr.Blocks(title="AI Assistant") as demo:
         chatbot = gr.Chatbot(
             [],
             elem_id="chatbot",
             bubble_full_width=False,
-            height=600
+            height=400
         )
         
         with gr.Row():
@@ -22,8 +19,8 @@ def create_interface(orchestrator: Orchestrator) -> gr.Blocks:
         
         clear = gr.Button("Clear")
 
-        async def process_message(message: str, history):
-            response = await orchestrator.process_query(message, history)
+        def process_message(message, history):
+            response = process_query(message, history)
             history.append((message, response))
             return "", history
 
@@ -40,7 +37,7 @@ def create_interface(orchestrator: Orchestrator) -> gr.Blocks:
         )
         
         clear.click(
-            orchestrator.clear_context,
+            clear_context,
             None,
             [chatbot, msg]
         )

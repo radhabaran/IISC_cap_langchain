@@ -13,7 +13,7 @@ openai==1.10
 tiktoken>=0.5.2
 
 # UI Framework
-gradio==4.7.1
+gradio==4.44.1
 setuptools>=65.5.1
 
 # Data Processing & Utils
@@ -22,6 +22,6 @@ pandas==2.1.3
 python-dotenv==1.0.0
 
 # Core Dependencies
-pydantic==2.5.2
+#pydantic==2.5.2
 typing-extensions==4.8.0
 requests==2.31.0

@@ -1,25 +1,35 @@
-# product_review_agent.py
 from langchain_openai import ChatOpenAI
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.memory import ConversationBufferMemory
+import faiss
+import warnings
+import os
 
-class ProductReviewAgent:
-    def __init__(self, llm: ChatOpenAI, memory: ConversationBufferMemory):
-        self.llm = llm
-        self.memory = memory
-        self.vectorstore = Chroma(
-            collection_name="products",
-            persist_directory="./data/chroma"
-        )
+warnings.filterwarnings("ignore")
+import pickle
 
-    async def process(self, query: str) -> str:
-        results = self.vectorstore.similarity_search(query)
-        # Process results and return formatted response
-        return self._format_response(results)
+# Global variables
+llm = None
+memory = None
+# vectorstore = None
 
-    def _format_response(self, results):
-        # Format the response based on vector search results
-        return "\n".join([doc.page_content for doc in results[:2]])
+def initialize_product_review_agent(llm_instance, memory_instance):
+    global llm, memory #, vectorstore
+    llm = llm_instance
+    memory = memory_instance
+    # vectorstore = Chroma(
+    #     collection_name="products",
+    #     persist_directory="./data/chroma"
+    # )
 
-    def clear_context(self):
-        self.memory.clear()
+def process(query):
+    # results = vectorstore.similarity_search(query)
+    # Process results and return formatted response
+    return format_response(results)
+
+def format_response(results):
+    # Format the response based on vector search results
+    return "\n".join([doc.page_content for doc in results[:2]])
+
+def clear_context():
+    memory.clear()

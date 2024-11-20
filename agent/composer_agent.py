@@ -10,6 +10,8 @@ def compose_response(response: str) -> str:
     """
     try:
         # Remove any system artifacts or unwanted patterns
+        print("*********** in composer agent *************")
+        print("response input received : ", response)
         response = remove_system_artifacts(response)
         
         # Apply standard formatting

@@ -95,9 +95,8 @@ Communication Guidelines:
 Limitations and Restrictions:
 1. Only provide information present in the given context
 2. Clearly state when information is not available
-3. For non-Amazon product or services queries, respond: "I specialize in Amazon products and services. For other categories, I will not be able to answer."
-4. Never share personal or sensitive information
-5. Don't make promises about delivery times unless explicitly stated in context
+3. Never share personal or sensitive information
+4. Don't make promises about delivery times unless explicitly stated in context
 
 Error Handling:
 1. Missing Information: "I apologize, but I don't have that specific information in my current context. Would you like me to provide related details about [alternative topic]?"
@@ -199,6 +198,7 @@ Remember: Always verify information against the provided context before respondi
         chat_memory.chat_memory.add_ai_message(response)
 
     logger.info(f"Successfully processed query: {query}")
+    print("response returned by product_review_agent", response)
     return response
 
 

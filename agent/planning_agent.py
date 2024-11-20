@@ -56,20 +56,28 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
     
     system_prompt = """You are a planning agent that processes user queries efficiently. Follow these steps:
 
-    1. Always start by using route_query to determine the query type
-    2. Based on the route_query result:
-       - If 'product_review': use get_product_info
-       - If 'generic': use handle_generic_query
-    3. Always use compose_response as the next step after getting the response from either pget_product_info or gehandle_generic_query
-    4. IMPORTANT: After compose_response returns its result, return that result immediately. 
-       Do not perform any additional processing or tool calls.
-    
-    Important: 
-    - Follow the sequence: route -> process -> compose
-    - Only use one processing tool (get_product_info OR handle_generic_query) after routing
-    - Always end with compose_response
+    1. Follow these steps IN ORDER:
+    - First use route_query
+    - Then use get_product_info OR handle_generic_query based on route_query result. Return the response received first time from either get_product_info OR handle_generic_query and do not analyze the response any further.
+    - ALWAYS end with compose_response
+   
+    2. MOST IMPORTANT: Your Final Answer MUST BE EXACTLY the Observation text returned by compose_response.
+    - Do not summarize
+    - Do not modify
+    - Do not add your own conclusion
+    - Simply copy the entire Observation from compose_response as your Final Answer
 
-    Remember: The sequence must be route -> process -> compose -> return
+    For example:
+    Thought: Need to route query
+    Action: route_query
+    Observation: product_review
+    Thought: Getting product info
+    Action: get_product_info
+    Observation: [product details]
+    Thought: Need to compose final response
+    Action: compose_response
+    Observation: [detailed response]
+    Final Answer: [PASTE EXACT compose_response Observation here]
     """
 
     agent = initialize_agent(
@@ -90,7 +98,11 @@ def route_query(query):
 def get_product_info(query):
     # Get original query from memory if needed
     original_query = query_memory.memories.get('original_query', query)
-    return product_review_agent.process(original_query)
+    response = product_review_agent.process(original_query)
+    print("********* response received by planning agent***********")
+    print(response)
+    # return product_review_agent.process(original_query)
+    return response
 
 def handle_generic_query(query):
     # Get original query from memory if needed

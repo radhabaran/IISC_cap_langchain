@@ -6,6 +6,11 @@ import agent.router_agent as router_agent
 import agent.product_review_agent as product_review_agent
 import agent.generic_agent as generic_agent
 import agent.composer_agent as composer_agent
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Global variables
 llm = None
@@ -73,6 +78,7 @@ def initialize_planning_agent(llm_instance, memory_instance):
         memory=memory,
         system_message=system_prompt
     )
+    logger.info("Planning agent initialized successfully")
 
 def route_query(query):
     return router_agent.classify_query(query)

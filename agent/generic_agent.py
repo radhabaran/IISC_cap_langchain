@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 llm = None
 memory = None
 prompt = None
+
 system_prompt = """
 Role
 You are a knowledgeable and compassionate customer support chatbot specializing the various products
@@ -89,7 +90,19 @@ def process(query):
     print("*********** In generic query *************")
     print("query :", query)
     print("response :", response)
+    # Update memory if available
+    if memory:
+        memory.save_context({"input": query}, {"output": response.content})
     return response.content
 
 def clear_context():
-    memory.clear()
+    """Clear the conversation memory"""
+    try:
+        if memory:
+            memory.clear()
+            logger.info("Conversation context cleared successfully")
+        else:
+            logger.warning("No memory instance available to clear")
+    except Exception as e:
+        logger.error(f"Error clearing context: {str(e)}")
+        raise

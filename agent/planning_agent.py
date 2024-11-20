@@ -1,7 +1,7 @@
 from langchain_openai import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain.tools import Tool
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory, SimpleMemory
 import agent.router_agent as router_agent
 import agent.product_review_agent as product_review_agent
 import agent.generic_agent as generic_agent
@@ -14,19 +14,21 @@ logger = logging.getLogger(__name__)
 
 # Global variables
 llm = None
-memory = None
+chat_memory = None
+query_memory = None
 agent = None
 
-def initialize_planning_agent(llm_instance, memory_instance):
-    global llm, memory, agent
+def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_instance):
+    global llm, chat_memory, query_memory, agent
     
     llm = llm_instance
-    memory = memory_instance
+    chat_memory = chat_memory_instance
+    query_memory = query_memory_instance
     
     # Initialize agents
-    router_agent.initialize_router_agent(llm, memory)
-    product_review_agent.initialize_product_review_agent(llm, memory)
-    generic_agent.initialize_generic_agent(llm, memory)
+    router_agent.initialize_router_agent(llm, chat_memory)
+    product_review_agent.initialize_product_review_agent(llm, chat_memory)
+    generic_agent.initialize_generic_agent(llm, chat_memory)
     # composer_agent.initialize_composer_agent(llm, memory)
     
     tools = [
@@ -58,7 +60,7 @@ def initialize_planning_agent(llm_instance, memory_instance):
     2. Based on the route_query result:
        - If 'product_review': use get_product_info
        - If 'generic': use handle_generic_query
-    3. Always use compose_response as the final step
+    3. Always use compose_response as the next step after getting the response from either pget_product_info or gehandle_generic_query
     4. IMPORTANT: After compose_response returns its result, return that result immediately. 
        Do not perform any additional processing or tool calls.
     
@@ -75,32 +77,44 @@ def initialize_planning_agent(llm_instance, memory_instance):
         llm,
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
-        memory=memory,
+        memory=chat_memory,
         system_message=system_prompt
     )
     logger.info("Planning agent initialized successfully")
 
 def route_query(query):
-    return router_agent.classify_query(query)
+    # Get original query from memory if needed
+    original_query = query_memory.memories.get('original_query', query)
+    return router_agent.classify_query(original_query)
 
 def get_product_info(query):
-    return product_review_agent.process(query)
+    # Get original query from memory if needed
+    original_query = query_memory.memories.get('original_query', query)
+    return product_review_agent.process(original_query)
 
 def handle_generic_query(query):
-    return generic_agent.process(query)
+    # Get original query from memory if needed
+    original_query = query_memory.memories.get('original_query', query)
+    return generic_agent.process(original_query)
 
 def compose_response(response):
     return composer_agent.compose_response(response)
 
 def execute(query):
     try:
+        # Store original query
+        query_memory.memories['original_query'] = query
         return agent.run(
             f"Process this user query: {query}"
         )
     except Exception as e:
+        logger.error(f"Error in planning agent: {str(e)}")
         return f"Error in planning agent: {str(e)}"
 
 def clear_context():
-    memory.clear()
+    if chat_memory:
+        chat_memory.clear()
+    if query_memory:
+        query_memory.memories.clear()
     product_review_agent.clear_context()
     generic_agent.clear_context()

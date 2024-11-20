@@ -20,7 +20,6 @@ from langchain_community.vectorstores import Chroma
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
-from langchain_core.messages import HumanMessage, SystemMessage
 
 import faiss
 import warnings
@@ -123,7 +122,11 @@ def process(query):
     """
 
     # Get existing chat history from memory
-    chat_history = memory.chat_memory.messages if memory else []
+    chat_history = ""
+    if memory and memory.chat_memory.messages:
+        chat_history = "\nPrevious conversation:\n"
+        for msg in memory.chat_memory.messages:
+            chat_history += f"{msg.content}\n"
 
     # Check if embeddings already exist
     embedding_path = '/workspaces/IISC_cap_langchain/data/embeddings.npy'
@@ -138,7 +141,7 @@ def process(query):
             raise FileNotFoundError(f"Embedding file not found at: {embedding_path}")
         if not os.path.exists(documents_path):
             raise FileNotFoundError(f"Documents file not found at: {documents_path}")
-    except (FileNotFoundError, FileOperationError) as e:
+    except FileNotFoundError as e:
         logger.error(str(e))
         raise
 
@@ -164,24 +167,22 @@ def process(query):
     print('*' * 100)
 
     # Include chat history in the prompt for context
-    history_text = ""
-    if chat_history:
-        history_text = "\nPrevious conversation:\n"
-        for msg in chat_history:
-            if isinstance(msg, HumanMessage):
-                history_text += f"User: {msg.content}\n"
-            elif isinstance(msg, AIMessage):
-                history_text += f"Assistant: {msg.content}\n"
+    structured_prompt = f"""
+    Context:
+    {context}
 
-    structured_prompt = f"Context:\n{context}\n{history_text}\nQuery:\n{query}\n\nResponse:"
+    {chat_history}
+    
+    Current Query:
+    {query}
+    """
 
     print("structured prompt created :", structured_prompt)
     print('*' * 100)
-
-    # Create proper message objects
+    # Create messages for the chat model
     messages = [
-        SystemMessage(content=System_Prompt),
-        HumanMessage(content=structured_prompt)
+        {"role": "system", "content": System_Prompt},
+        {"role": "user", "content": structured_prompt}
     ]
 
     # For chat completion, you can use LangChain's ChatOpenAI
@@ -190,8 +191,7 @@ def process(query):
 
     # Update memory with the current interaction
     if memory:
-        memory.chat_memory.add_message(HumanMessage(content=query))
-        memory.chat_memory.add_message(AIMessage(content=response))
+        memory.save_context({"input": query}, {"output": response})
 
     return response
 

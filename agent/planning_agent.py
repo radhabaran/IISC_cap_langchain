@@ -27,7 +27,7 @@ def initialize_planning_agent(llm_instance, memory_instance):
     router_agent.initialize_router_agent(llm, memory)
     product_review_agent.initialize_product_review_agent(llm, memory)
     generic_agent.initialize_generic_agent(llm, memory)
-    composer_agent.initialize_composer_agent(llm, memory)
+    # composer_agent.initialize_composer_agent(llm, memory)
     
     tools = [
         Tool(

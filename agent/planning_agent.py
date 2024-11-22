@@ -35,17 +35,17 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
         Tool(
             name="route_query",
             func=route_query,
-            description="First step: Determine query type. Returns either 'product_review' or 'generic'"
+            description="Determine query type. Returns either 'product_review' or 'generic'"
         ),
         Tool(
             name="get_product_info",
             func=get_product_info,
-            description="Use this for product-related queries about features, prices, availability, or reviews"
+            description="Use this to extract product-related data such as features, prices, availability, or reviews"
         ),
         Tool(
             name="handle_generic_query",
             func=handle_generic_query,
-            description="Use this for general queries not related to products"
+            description="Use this to respond to general user queries not related to products"
         ),
         Tool(
             name="compose_response",
@@ -58,15 +58,9 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
 
     1. Follow these steps IN ORDER:
     - First use route_query
-    - Then use get_product_info OR handle_generic_query based on route_query result. Return the response received first time from either get_product_info OR handle_generic_query and do not analyze the response any further.
-    - ALWAYS end with compose_response
+    - Then use get_product_info OR handle_generic_query based on route_query result. Your response should be very detailed. Always ask the user to check if the level of details is acceptable to user.
+    - ALWAYS use compose_response to format the final answer
    
-    2. MOST IMPORTANT: Your Final Answer MUST BE EXACTLY the Observation text returned by compose_response.
-    - Do not summarize
-    - Do not modify
-    - Do not add your own conclusion
-    - Simply copy the entire Observation from compose_response as your Final Answer
-
     For example:
     Thought: Need to route query
     Action: route_query
@@ -74,10 +68,10 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
     Thought: Getting product info
     Action: get_product_info
     Observation: [product details]
-    Thought: Need to compose final response
+    Thought: Need to format response properly
     Action: compose_response
     Observation: [detailed response]
-    Final Answer: [PASTE EXACT compose_response Observation here]
+    Final Answer: [PASTE EXACT compose_response output here]
     """
 
     agent = initialize_agent(

@@ -40,38 +40,54 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
         Tool(
             name="get_product_info",
             func=get_product_info,
-            description="Use this to extract product-related data such as features, prices, availability, or reviews"
+            description="Use this to get product-related data such as features, prices, availability, or reviews"
         ),
         Tool(
             name="handle_generic_query",
             func=handle_generic_query,
-            description="Use this to respond to general user queries not related to products"
+            description="Use this to get response to user queries which are generic and retrieval of product details are not required"
         ),
         Tool(
             name="compose_response",
             func=compose_response,
-            description="Final step: Use this to format and enhance the response. After this step, return the response to main.py"
+            description="Use this to only format the response. After this step, return the formatted response to main.py"
         )
     ]
     
-    system_prompt = """You are a planning agent that processes user queries efficiently. Follow these steps:
+    
+    system_prompt = """You are an efficient AI planning agent. Follow these rules strictly:
 
-    1. Follow these steps IN ORDER:
-    - First use route_query
-    - Then use get_product_info OR handle_generic_query based on route_query result. Your response should be very detailed. Always ask the user to check if the level of details is acceptable to user.
-    - ALWAYS use compose_response to format the final answer
-   
-    For example:
-    Thought: Need to route query
+    CRITICAL INSTRUCTION:
+    For simple queries listed below, skip the route_query and directly go to handle_generic_query.
+
+    SIMPLE QUERIES (NEVER use tools):
+    1. Greetings: "hi", "hello", "hey", "good morning", "good evening", "good afternoon"
+    2. Farewells: "bye", "goodbye", "see you", "take care"
+    3. Thank you messages: "thanks", "thank you", "thanks a lot", "appreciate it"
+    4. Simple confirmations: "okay", "yes", "no", "sure", "alright"
+    5. Basic courtesy: "how are you?", "how are you doing?", "what's up?", "what are you doing?"
+    6. Simple acknowledgments: "got it", "understood", "I see"
+
+    FOR ALL OTHER QUERIES:
+    1. Use route_query to determine if query is product_review or generic
+    2. If route returns 'generic', use handle_generic_query and STOP
+    3. If route returns 'product_review', use get_product_info and STOP
+
+    EXAMPLES:
+    User: "Hi"
+    Thought: Simple greeting, respond directly
+    Action: handle_generic_query
+    Observation : "Hi! How can I help you today?"
+    Thought : I have got the final answer
+    Action  : compose_responses
+    Final Answer: "Hi! How can I help you today?"
+
+    User: "Tell me about smartphone batteries"
+    Thought: Need to determine query type
     Action: route_query
-    Observation: product_review
-    Thought: Getting product info
-    Action: get_product_info
-    Observation: [product details]
-    Thought: Need to format response properly
-    Action: compose_response
-    Observation: [detailed response]
-    Final Answer: [PASTE EXACT compose_response output here]
+    Action Input: "Tell me about smartphone batteries"
+
+    Remember: For simple queries listed above, respond immediately with Final Answer WITHOUT using tools.
     """
 
     agent = initialize_agent(
@@ -80,7 +96,9 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         memory=chat_memory,
-        system_message=system_prompt
+        system_message=system_prompt,
+        early_stopping_method="generate",
+        max_iterations=2
     )
     logger.info("Planning agent initialized successfully")
 
@@ -101,7 +119,15 @@ def get_product_info(query):
 def handle_generic_query(query):
     # Get original query from memory if needed
     original_query = query_memory.memories.get('original_query', query)
-    return generic_agent.process(original_query)
+    response = generic_agent.process(original_query)
+    print("********* generic query response received by planning agent***********")
+    print(response)
+    return {
+        "intermediate_steps": [],
+        "output": response,
+        "action": "Final Answer",
+        "action_input": response
+    }
 
 def compose_response(response):
     return composer_agent.compose_response(response)

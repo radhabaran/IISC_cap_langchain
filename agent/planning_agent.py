@@ -8,6 +8,10 @@ import agent.generic_agent as generic_agent
 import agent.composer_agent as composer_agent
 import logging
 
+# Set httpx (HTTP request) logging to WARNING or ERROR level
+# This will hide the HTTP request logs while keeping agent thoughts visible
+logging.getLogger("httpx").setLevel(logging.WARNING)   # added on 23-Nob
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,7 +49,7 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
         Tool(
             name="handle_generic_query",
             func=handle_generic_query,
-            description="Use this to get response to user queries which are generic and retrieval of product details are not required"
+            description="Use this to get response to user queries which are generic and where the retrieval of product details are not required"
         ),
         Tool(
             name="compose_response",
@@ -70,8 +74,8 @@ def initialize_planning_agent(llm_instance, chat_memory_instance, query_memory_i
 
     FOR ALL OTHER QUERIES:
     1. Use route_query to determine if query is product_review or generic
-    2. If route returns 'generic', use handle_generic_query and STOP
-    3. If route returns 'product_review', use get_product_info and STOP
+    2. If route_query returns 'generic', use handle_generic_query and STOP
+    3. If route_query returns 'product_review', use get_product_info and STOP
 
     EXAMPLES:
     User: "Hi"
@@ -111,17 +115,18 @@ def get_product_info(query):
     # Get original query from memory if needed
     original_query = query_memory.memories.get('original_query', query)
     response = product_review_agent.process(original_query)
-    print("********* response received by planning agent***********")
-    print(response)
-    # return product_review_agent.process(original_query)
-    return response
+
+    return {
+        "intermediate_steps": [],
+        "output": response,
+        "action": "Final Answer",
+        "action_input": response
+    }
 
 def handle_generic_query(query):
     # Get original query from memory if needed
     original_query = query_memory.memories.get('original_query', query)
     response = generic_agent.process(original_query)
-    print("********* generic query response received by planning agent***********")
-    print(response)
     return {
         "intermediate_steps": [],
         "output": response,
